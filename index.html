@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salud y deporte · seguimiento</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#6b7380;--line:#e3e6ea;--ac:#2563eb;--ac2:#f97316;--ac3:#16a34a;--bad:#dc2626;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1216;--card:#181c22;--tx:#e8ebef;--mut:#929aa6;--line:#2a2f37;--ac:#60a5fa;--ac2:#fb923c;--ac3:#4ade80;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#0f1216;--card:#181c22;--tx:#e8ebef;--mut:#929aa6;--line:#2a2f37;--ac:#60a5fa;--ac2:#fb923c;--ac3:#4ade80;--bad:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:4px 0 2px}
+.sub{color:var(--mut);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.stat small{color:var(--mut);display:block}
+.stat b{font-size:1.4rem}
+.stat span{font-size:.85rem;color:var(--mut)}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;align-items:end}
+label{font-size:.8rem;color:var(--mut);display:block}
+input{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+button{padding:9px 14px;border:0;border-radius:8px;background:var(--ac);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button.del{background:transparent;color:var(--bad);padding:2px 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin:12px 0}
+.chart{height:250px;position:relative}
+h2{font-size:1rem;margin:0 0 8px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.85rem;white-space:nowrap}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mut);font-weight:600}
+.note{color:var(--mut);font-size:.8rem;margin-top:10px}
+[hidden]{display:none!important}
+input{font-size:16px}
+.tabs{display:flex;gap:8px;margin:0 0 12px}
+.tabs button{flex:1;background:var(--card);color:var(--tx);border:1px solid var(--line)}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#v2>.card{margin-top:12px}
+.cfg,.meals{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.meals{margin-top:12px}
+.daynav{display:flex;gap:8px}
+.daynav input{flex:1}
+.bar{height:10px;border-radius:6px;background:var(--line);margin-top:14px;overflow:hidden}
+.bar i{display:block;height:100%;width:0}
+.warn{color:var(--bad)}
+#adv p{margin:0 0 10px}
+.lk{background:transparent;color:var(--ac);padding:2px 0;font-weight:600}
+.sec{background:var(--card);color:var(--tx);border:1px solid var(--line)}
+#v3>.card{margin-top:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>Seguimiento de báscula</h1>
+<p class="sub">Siempre en las mismas condiciones: en ayunas, desnudo y a la misma hora. Lo que importa es la tendencia.</p>
+
+<p id="st" class="note" style="margin:-6px 0 10px"></p>
+<div class="tabs"><button id="t1" class="on">Cuerpo</button><button id="t2">Calorías</button><button id="t3">Sync</button></div>
+<div id="v1">
+<div class="card"><form id="f">
+<div><label>Fecha</label><input type="date" id="d" required></div>
+<div><label>Peso (kg)</label><input type="number" step="0.1" id="p" required></div>
+<div><label>Grasa (%)</label><input type="number" step="0.1" id="g"></div>
+<div><label>Músculo (%)</label><input type="number" step="0.1" id="m"></div>
+<div><label>Grasa visceral</label><input type="number" step="0.1" id="v"></div>
+<div><label>Agua (%)</label><input type="number" step="0.1" id="a"></div>
+<div><label>Cintura (cm)</label><input type="number" step="0.5" id="c"></div>
+<div><label>Cuello (cm)</label><input type="number" step="0.5" id="n"></div>
+<div><label>Pecho (cm)</label><input type="number" step="0.5" id="pe"></div>
+<div><label>Brazo (cm)</label><input type="number" step="0.5" id="b"></div>
+<div><label>Cadera (cm)</label><input type="number" step="0.5" id="ca"></div>
+<div><label>Muslo (cm)</label><input type="number" step="0.5" id="mu"></div>
+<div><button type="submit">Añadir</button></div>
+</form></div>
+
+<div class="stats" id="stats"></div>
+
+<div class="grid">
+<div class="card"><h2>Peso y media de 7 días</h2><div class="chart"><canvas id="c1"></canvas></div></div>
+<div class="card"><h2>Grasa y músculo (%)</h2><div class="chart"><canvas id="c2"></canvas></div></div>
+<div class="card"><h2>Cintura (cm)</h2><div class="chart"><canvas id="c3"></canvas></div></div>
+<div class="card"><h2>Grasa visceral</h2><div class="chart"><canvas id="c4"></canvas></div></div>
+<div class="card" style="grid-column:1/-1"><h2>Medidas corporales (cm)</h2><div class="chart"><canvas id="c5"></canvas></div></div>
+</div>
+
+<div class="card tw"><h2>Registros</h2><table id="t"></table>
+<p class="note">Los datos se guardan solo en este navegador. Si registras una fecha que ya existe, se sustituye.</p></div>
+</div>
+<div id="v2" hidden>
+<div class="card"><h2>Ajustes</h2><div class="cfg">
+<div><label>Metabolismo basal (kcal/día)</label><input type="number" inputmode="numeric" id="s_bmr"></div>
+<div><label>Factor de actividad</label><input type="number" inputmode="decimal" step="0.005" id="s_act"></div>
+<div><label>Déficit objetivo (kcal/día)</label><input type="number" inputmode="numeric" id="s_def"></div>
+</div><p class="note">Factor: 1,2 sedentario · 1,375 ligero · 1,55 moderado · 1,725 muy activo. La báscula te dio 2126 kcal de metabolismo basal.</p></div>
+<div class="stats" id="cs"></div>
+<div class="card"><h2>Registro diario</h2>
+<div class="daynav"><button id="dp">‹</button><input type="date" id="cd"><button id="dn">›</button></div>
+<div class="meals" id="meals"></div>
+<div class="bar"><i id="bi"></i></div><p class="note" id="bt"></p></div>
+<div class="card" id="adv"></div>
+<div class="card"><h2>Últimos 14 días</h2><div class="chart"><canvas id="cc"></canvas></div></div>
+<div class="card tw"><h2>Historial</h2><table id="ct"></table></div>
+</div>
+<div id="v3" hidden>
+<div class="card"><h2>Sincronización con GitHub</h2>
+<div class="cfg">
+<div><label>Usuario u organización</label><input id="g_o" autocapitalize="off" autocomplete="off"></div>
+<div><label>Repositorio de datos</label><input id="g_r" autocapitalize="off" autocomplete="off"></div>
+<div><label>Rama</label><input id="g_b" placeholder="main" autocapitalize="off"></div>
+<div><label>Archivo de datos</label><input id="g_p" placeholder="data/seguimiento.json" autocapitalize="off"></div>
+<div style="grid-column:1/-1"><label>Token de acceso (fine-grained)</label><input id="g_t" type="password" autocomplete="off"></div>
+</div>
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0"><button id="g_s">Guardar y sincronizar</button><button id="g_n" class="sec">Sincronizar ahora</button><button id="g_x" class="sec">Desconectar</button></p>
+<p id="st2" class="note"></p>
+<p class="note">El token se guarda solo en este dispositivo: repite este paso en cada móvil u ordenador. Usa un token limitado al repositorio de datos, con permiso Contents de lectura y escritura. Se sincroniza al abrir la web, al volver a ella y 2 segundos después de cada cambio.</p></div>
+<div class="card"><h2>Importar o exportar datos</h2>
+<p class="note" style="margin-top:0">Para traer los datos del artefacto antiguo: pega aquí el texto que copiaste y pulsa Importar. Los datos se fusionan con los que ya tengas.</p>
+<textarea id="x_t" style="width:100%;height:120px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px;font:13px monospace"></textarea>
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0"><button id="x_i">Importar y fusionar</button><button id="x_e" class="sec">Exportar (copia de seguridad)</button></p></div>
+</div>
+</main>
+<script>
+const KEY="bascula_v1";
+let rows=[];
+function load(){try{const s=localStorage.getItem(KEY);if(s)return JSON.parse(s)}catch(e){}return null}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(rows))}catch(e){}if(window.onChg)onChg()}
+rows=load()||[{d:"2026-11-03",t:1,p:107.9,g:31.6,m:36.0,v:23.5,a:50.3,c:null}];
+const $=id=>document.getElementById(id);
+$("d").value=new Date().toISOString().slice(0,10);
+const fmt=d=>d.split("-").reverse().join("/");
+const num=v=>v===""||v==null?null:parseFloat(v);
+const f1=v=>v==null?"–":v.toFixed(1).replace(".",",");
+
+$("f").addEventListener("submit",e=>{
+  e.preventDefault();
+  const r={t:Date.now(),d:$("d").value,p:num($("p").value),g:num($("g").value),m:num($("m").value),v:num($("v").value),a:num($("a").value),c:num($("c").value),n:num($("n").value),pe:num($("pe").value),b:num($("b").value),ca:num($("ca").value),mu:num($("mu").value)};
+  rows=rows.filter(x=>x.d!==r.d);rows.push(r);rows.sort((a,b)=>a.d.localeCompare(b.d));
+  save();["p","g","m","v","a","c","n","pe","b","ca","mu"].forEach(i=>$(i).value="");render();
+});
+function del(d){rows=rows.filter(x=>x.d!==d);tomb["r:"+d]=Date.now();save();render()}
+
+function ma7(){
+  return rows.map(r=>{
+    const t=new Date(r.d).getTime();
+    const w=rows.filter(x=>{const u=new Date(x.d).getTime();return u<=t&&t-u<7*864e5});
+    return +(w.reduce((s,x)=>s+x.p,0)/w.length).toFixed(2);
+  });
+}
+function delta(key){
+  const v=rows.filter(r=>r[key]!=null);
+  if(v.length<2)return "sin comparación aún";
+  const x=v[v.length-1][key]-v[0][key];
+  return (x>0?"+":"")+x.toFixed(1).replace(".",",")+" desde el primer registro";
+}
+function stats(){
+  const l=rows[rows.length-1];if(!l){$("stats").innerHTML="";return}
+  const kg=l.g!=null?l.p*l.g/100:null;
+  const items=[["Peso",f1(l.p)+" kg",delta("p")],["Grasa",f1(l.g)+" %",delta("g")],
+  ["Masa grasa est.",kg!=null?f1(kg)+" kg":"–","peso × % de grasa"],["Cintura",l.c!=null?f1(l.c)+" cm":"–",delta("c")]];
+  $("stats").innerHTML=items.map(i=>`<div class="card stat"><small>${i[0]}</small><b>${i[1]}</b><span>${i[2]}</span></div>`).join("");
+}
+function table(){
+  const h="<tr><th>Fecha</th><th>Peso</th><th>Grasa %</th><th>Músculo %</th><th>Visc.</th><th>Agua %</th><th>Cintura</th><th>Cuello</th><th>Pecho</th><th>Brazo</th><th>Cadera</th><th>Muslo</th><th></th></tr>";
+  const b=[...rows].reverse().map(r=>`<tr><td>${fmt(r.d)}</td><td>${f1(r.p)}</td><td>${f1(r.g)}</td><td>${f1(r.m)}</td><td>${f1(r.v)}</td><td>${f1(r.a)}</td><td>${f1(r.c)}</td><td>${f1(r.n)}</td><td>${f1(r.pe)}</td><td>${f1(r.b)}</td><td>${f1(r.ca)}</td><td>${f1(r.mu)}</td><td><button class="del" data-d="${r.d}" title="Borrar">✕</button></td></tr>`).join("");
+  $("t").innerHTML=h+b;
+  $("t").querySelectorAll(".del").forEach(x=>x.onclick=()=>del(x.dataset.d));
+}
+
+let charts=[];
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function mk(id,series,extra){
+  const tx=css("--mut"),ln=css("--line");
+  return new Chart($(id),{type:"line",
+    data:{labels:rows.map(r=>fmt(r.d)),datasets:series.map(s=>({label:s.l,data:s.data,borderColor:s.c[0]==="-"?css(s.c):s.c,backgroundColor:s.c[0]==="-"?css(s.c):s.c,borderWidth:2,pointRadius:3,tension:.25,spanGaps:true,borderDash:s.dash||[]}))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:series.length>1,labels:{color:tx}}},
+      scales:{x:{ticks:{color:tx,maxTicksLimit:6},grid:{color:ln}},y:{ticks:{color:tx},grid:{color:ln},...(extra||{})}}}});
+}
+function draw(){
+  charts.forEach(c=>c.destroy());
+  charts=[
+    mk("c1",[{l:"Peso",c:"--ac",data:rows.map(r=>r.p)},{l:"Media 7 días",c:"--ac2",dash:[5,4],data:ma7()}]),
+    mk("c2",[{l:"Grasa %",c:"--ac2",data:rows.map(r=>r.g)},{l:"Músculo %",c:"--ac3",data:rows.map(r=>r.m)}]),
+    mk("c3",[{l:"Cintura",c:"--ac",data:rows.map(r=>r.c)}]),
+    mk("c4",[{l:"Grasa visceral",c:"--ac2",data:rows.map(r=>r.v)}]),
+    mk("c5",[{l:"Cintura",c:"--ac",data:rows.map(r=>r.c??null)},{l:"Cuello",c:"#a855f7",data:rows.map(r=>r.n??null)},{l:"Pecho",c:"--ac3",data:rows.map(r=>r.pe??null)},{l:"Brazo",c:"#eab308",data:rows.map(r=>r.b??null)},{l:"Cadera",c:"--ac2",data:rows.map(r=>r.ca??null)},{l:"Muslo",c:"#14b8a6",data:rows.map(r=>r.mu??null)}])
+  ];
+}
+function render(){stats();table();draw()}
+render();
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+</script>
+<script>
+const KC="kcal_v1",KG="kcal_cfg",MEALS=[["b","Desayuno"],["mm","Media mañana"],["c","Comida"],["mt","Media tarde"],["ce","Cena"]],KEYS=["b","mm","c","mt","ce","pr"];
+let cal=[],cfg={bmr:2126,act:1.375,def:500},cur="",cc=null,realT=null;
+try{const s=localStorage.getItem(KC);if(s)cal=JSON.parse(s)}catch(e){}
+try{const s=localStorage.getItem(KG);if(s)cfg=Object.assign(cfg,JSON.parse(s))}catch(e){}
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(window.onChg)onChg()};
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const shift=(d,n)=>{const t=new Date(d+"T00:00:00Z");t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10)};
+const dnum=d=>Date.parse(d+"T00:00:00Z")/864e5;
+const tot=r=>MEALS.reduce((s,m)=>s+(r[m[0]]||0),0);
+const tdee=()=>cfg.bmr*cfg.act,goal=()=>Math.round(tdee()-cfg.def);
+function slope(p){const n=p.length,mx=p.reduce((s,q)=>s+q[0],0)/n,my=p.reduce((s,q)=>s+q[1],0)/n;let a=0,b=0;p.forEach(q=>{a+=(q[0]-mx)*(q[1]-my);b+=(q[0]-mx)**2});return b?a/b:0}
+cur=today();
+
+function mealsUI(){
+ $("meals").innerHTML=MEALS.map(m=>`<div><label>${m[1]} (kcal)</label><input type="number" inputmode="numeric" min="0" id="k_${m[0]}"></div>`).join("")+`<div><label>Proteína del día (g)</label><input type="number" inputmode="numeric" min="0" id="k_pr"></div>`;
+ KEYS.forEach(k=>$("k_"+k).addEventListener("change",saveDay));
+}
+function loadDay(){const r=cal.find(x=>x.d===cur)||{};KEYS.forEach(k=>$("k_"+k).value=r[k]==null?"":r[k]);$("cd").value=cur}
+function saveDay(){
+ let r=cal.find(x=>x.d===cur);
+ if(!r){r={d:cur};cal.push(r);cal.sort((a,b)=>a.d.localeCompare(b.d))}
+ KEYS.forEach(k=>{const v=num($("k_"+k).value);if(v==null||isNaN(v))delete r[k];else r[k]=v});
+ r.t=Date.now();if(KEYS.every(k=>r[k]==null)){cal=cal.filter(x=>x!==r);tomb["c:"+cur]=r.t}
+ sv(KC,cal);renderCal();
+}
+function delDay(d){cal=cal.filter(x=>x.d!==d);tomb["c:"+d]=Date.now();sv(KC,cal);if(d===cur)loadDay();renderCal()}
+function setCfg(){$("s_bmr").value=cfg.bmr;$("s_act").value=cfg.act;$("s_def").value=cfg.def}
+
+function advice(){
+ const end=today(),W=rows.length?rows[rows.length-1].p:null,g=goal(),h=[];
+ realT=null;
+ const win=cal.filter(r=>tot(r)>0&&r.d<end&&r.d>=shift(end,-20));
+ if(g<cfg.bmr)h.push(`<p class="warn"><b>Atención:</b> tu objetivo (${g} kcal) queda por debajo de tu metabolismo basal. Reduce el déficit.</p>`);
+ if(win.length<7)return h.join("")+`<p><b>Estrategia:</b> registra al menos 7 días de comidas (llevas ${win.length}) y pésate 2-3 veces por semana. Con eso podré decirte si pierdes al ritmo adecuado y cuándo ajustar.</p>`;
+ const avg=win.reduce((s,r)=>s+tot(r),0)/win.length,adh=avg/g*100;
+ h.push(`<p><b>Últimos ${win.length} días registrados:</b> media de ${Math.round(avg)} kcal (${Math.round(adh)} % del objetivo) y déficit medio de ${Math.round(tdee()-avg)} kcal/día frente al gasto estimado.</p>`);
+ const pts=rows.filter(r=>r.d>=shift(end,-20)).map(r=>[dnum(r.d),r.p]);
+ if(pts.length<3||pts[pts.length-1][0]-pts[0][0]<6)return h.join("")+"<p>Faltan pesajes: necesito al menos 3 en las últimas 3 semanas, repartidos en 6 días o más, para medir la tendencia.</p>";
+ const sl=slope(pts),wk=sl*7,pct=wk/W*100;realT=Math.round(avg-sl*7700);
+ h.push(`<p><b>Tendencia de peso:</b> ${wk>0?"+":""}${f1(wk)} kg/semana (${f1(pct)} % del peso corporal). Gasto real estimado: unas ${realT} kcal/día; la app usa ${Math.round(tdee())}.</p>`);
+ const long=cal.length&&dnum(end)-dnum(cal[0].d)>=56;
+ let s;
+ if(pct<=-1)s="<b>Pierdes demasiado rápido.</b> Por encima del 1 % semanal aumenta el riesgo de perder músculo. Sube 150–250 kcal/día y mantén el entrenamiento de fuerza.";
+ else if(pct<=-0.4)s="<b>Ritmo ideal.</b> Entre 0,4 y 1 % semanal se pierde grasa conservando músculo. No cambies nada y revisa de nuevo en 2 semanas.";
+ else if(adh>105)s="<b>No es un estancamiento, es cumplimiento:</b> comes más que tu objetivo. Antes de recortar nada, ajústate a las kcal objetivo durante 2 semanas.";
+ else if(pct<=-0.15)s="<b>Ritmo lento pero real.</b> Mejor sumar 1.500–2.000 pasos diarios que recortar más comida; si no basta, baja 100–150 kcal. Reevalúa en 2 semanas.";
+ else s=`<b>Estancamiento real:</b> comes lo previsto y el peso no baja, así que tu gasto es menor que el estimado. Por orden: 1) si has cambiado de dieta o entrenamiento hace poco, espera 2 semanas (retención de agua); 2) ajusta el factor de actividad al gasto real (botón de abajo); 3) ${long?"llevas más de 8 semanas en déficit: haz 1–2 semanas a mantenimiento (≈ tu gasto real) y retoma, para recuperar energía y adherencia":"para crear más déficit prefiere sumar 2.000 pasos diarios antes que recortar comida; si no basta, baja 150–200 kcal"}; 4) mantén proteína y fuerza.`;
+ h.push(`<p><b>Estrategia ahora:</b> ${s}</p>`);
+ if(Math.abs(realT-tdee())>100)h.push(`<p><button id="fixT">Ajustar factor de actividad al gasto real (${realT} kcal)</button></p>`);
+ if(W)h.push(`<p class="note">Proteína: ${Math.round(W*1.6)}–${Math.round(W*2)} g/día. Orientativo; con déficits largos o patologías, consulta a tu médico o dietista.</p>`);
+ return h.join("");
+}
+
+function chartCal(){
+ if(cc)cc.destroy();
+ const ds=[];for(let i=13;i>=0;i--)ds.push(shift(cur,-i));
+ const tx=css("--mut"),ln=css("--line"),g=goal();
+ cc=new Chart($("cc"),{type:"bar",data:{labels:ds.map(d=>d.slice(8)+"/"+d.slice(5,7)),datasets:[
+  {type:"bar",label:"Consumidas",data:ds.map(d=>{const r=cal.find(x=>x.d===d);return r&&tot(r)?tot(r):null}),backgroundColor:css("--ac")},
+  {type:"line",label:"Objetivo",data:ds.map(()=>g),borderColor:css("--ac3"),backgroundColor:css("--ac3"),borderWidth:2,pointRadius:0},
+  {type:"line",label:"Gasto estimado",data:ds.map(()=>Math.round(tdee())),borderColor:css("--ac2"),backgroundColor:css("--ac2"),borderDash:[5,4],borderWidth:2,pointRadius:0}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tx}}},scales:{x:{ticks:{color:tx,maxTicksLimit:7},grid:{color:ln}},y:{ticks:{color:tx},grid:{color:ln}}}}});
+}
+function tableCal(){
+ const g=goal();
+ const h="<tr><th>Fecha</th><th>Desay.</th><th>M. mañ.</th><th>Comida</th><th>M. tarde</th><th>Cena</th><th>Total</th><th>vs obj.</th><th>Prot.</th><th></th></tr>";
+ const b=[...cal].reverse().slice(0,30).map(r=>{const t=tot(r),d=t-g;return `<tr><td><button class="lk" data-o="${r.d}">${fmt(r.d)}</button></td>`+MEALS.map(m=>`<td>${r[m[0]]==null?"–":r[m[0]]}</td>`).join("")+`<td><b>${t}</b></td><td style="color:${d>0?"var(--bad)":"var(--ac3)"}">${d>0?"+":""}${d}</td><td>${r.pr==null?"–":r.pr}</td><td><button class="del" data-x="${r.d}">✕</button></td></tr>`}).join("");
+ $("ct").innerHTML=h+b;
+ $("ct").querySelectorAll("[data-o]").forEach(x=>x.onclick=()=>{cur=x.dataset.o;loadDay();renderCal();window.scrollTo(0,0)});
+ $("ct").querySelectorAll("[data-x]").forEach(x=>x.onclick=()=>delDay(x.dataset.x));
+}
+function renderCal(){
+ const r=cal.find(x=>x.d===cur)||{},c=tot(r),g=goal(),W=rows.length?rows[rows.length-1].p:null;
+ const it=[["Metabolismo basal",cfg.bmr+" kcal","en reposo"],["Gasto total estimado",Math.round(tdee())+" kcal","basal × actividad"],["Objetivo diario",g+" kcal","gasto − "+cfg.def+" de déficit"],[cur===today()?"Hoy":fmt(cur),c+" kcal",(g-c>=0?"quedan "+(g-c):"te pasas "+(c-g))+" kcal"],["Proteína objetivo",W?Math.round(W*1.6)+"–"+Math.round(W*2)+" g":"–","1,6–2 g por kg"]];
+ $("cs").innerHTML=it.map(i=>`<div class="card stat"><small>${i[0]}</small><b>${i[1]}</b><span>${i[2]}</span></div>`).join("");
+ const b=$("bi");b.style.width=(g>0?Math.min(100,c/g*100):0)+"%";b.style.background=c>g?css("--bad"):css("--ac3");
+ $("bt").textContent=c?"Déficit del día frente al gasto estimado: "+Math.round(tdee()-c)+" kcal"+(cur===today()?" (provisional hasta que acabe el día).":"."):"Introduce lo que has comido; se guarda al salir de cada campo.";
+ $("adv").innerHTML=advice();
+ const fx=$("fixT");if(fx)fx.onclick=()=>{cfg.act=+(realT/cfg.bmr).toFixed(3);cfg.t=Date.now();sv(KG,cfg);setCfg();renderCal()};
+ chartCal();tableCal();
+}
+function tab(n){
+ [1,2,3].forEach(i=>{$("v"+i).hidden=n!==i;$("t"+i).classList.toggle("on",n===i)});
+ if(n===2){loadDay();renderCal()}else if(n===1)draw();
+}
+mealsUI();loadDay();setCfg();
+["bmr","act","def"].forEach(k=>$("s_"+k).addEventListener("change",()=>{const v=num($("s_"+k).value);if(v!=null&&v>=0){cfg[k]=v;cfg.t=Date.now();sv(KG,cfg);renderCal()}}));
+$("dp").onclick=()=>{cur=shift(cur,-1);loadDay();renderCal()};
+$("dn").onclick=()=>{cur=shift(cur,1);loadDay();renderCal()};
+$("cd").addEventListener("change",()=>{cur=$("cd").value||today();loadDay();renderCal()});
+$("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);$("t3").onclick=()=>tab(3);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(!$("v2").hidden)renderCal()});
+</script>
+<script>
+const SK="sync_cfg",TK="sync_tomb",HK="sync_meta";
+let sc={owner:"",repo:"",branch:"main",path:"data/seguimiento.json",token:""},tomb={},applying=false,timer=null,busy=false,lastOk=null;
+try{Object.assign(sc,JSON.parse(localStorage.getItem(SK)||"{}"))}catch(e){}
+try{tomb=JSON.parse(localStorage.getItem(TK)||"{}")}catch(e){}
+try{lastOk=+localStorage.getItem(HK)||null}catch(e){}
+const pick=(o,ks)=>{const r={};ks.forEach(k=>{if(o[k]!==undefined&&o[k]!==null)r[k]=o[k]});return r};
+const RK=["d","t","p","g","m","v","a","c","n","pe","b","ca","mu"],CK=["d","t","b","mm","c","mt","ce","pr"];
+const cmp=(a,b)=>a.d.localeCompare(b.d);
+function norm(s){const tb={};Object.keys(s.tomb||{}).sort().forEach(k=>tb[k]=s.tomb[k]);return{v:1,rows:(s.rows||[]).map(r=>pick(r,RK)).sort(cmp),cal:(s.cal||[]).map(r=>pick(r,CK)).sort(cmp),cfg:pick(s.cfg||{},["bmr","act","def","t"]),tomb:tb}}
+function mergeD(L,R){
+ const tb={};[R.tomb||{},L.tomb||{}].forEach(o=>Object.keys(o).forEach(k=>tb[k]=Math.max(tb[k]||0,o[k])));
+ const ml=(a,b,p)=>{const m={};[...(a||[]),...(b||[])].forEach(r=>{const o=m[r.d];if(!o||(r.t||0)>(o.t||0))m[r.d]=r});return Object.values(m).filter(r=>tb[p+r.d]===undefined||tb[p+r.d]<(r.t||0)).sort(cmp)};
+ const c=((R.cfg&&R.cfg.t)||0)>((L.cfg&&L.cfg.t)||0)?R.cfg:L.cfg;
+ return{v:1,rows:ml(L.rows,R.rows,"r:"),cal:ml(L.cal,R.cal,"c:"),cfg:c||{},tomb:tb};
+}
+
+const ready=()=>!!(sc.owner&&sc.repo&&sc.token);
+function setSt(t,bad){["st","st2"].forEach(i=>{const e=$(i);if(e){e.textContent=t;e.className=bad?"warn":"note"}})}
+const snap=()=>({rows,cal,cfg,tomb});
+const api=()=>"https://api.github.com/repos/"+sc.owner+"/"+sc.repo+"/contents/"+sc.path.split("/").map(encodeURIComponent).join("/");
+const hd=()=>({Authorization:"Bearer "+sc.token,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"});
+function enc(o){let b="";new TextEncoder().encode(JSON.stringify(o,null,1)).forEach(x=>b+=String.fromCharCode(x));return btoa(b)}
+function dec(s){return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0))))}
+async function ghGet(){
+ const r=await fetch(api()+"?ref="+encodeURIComponent(sc.branch),{headers:hd(),cache:"no-store"});
+ if(r.status===404)return{sha:null,data:null};
+ if(!r.ok)throw new Error(r.status===401||r.status===403?"el token no tiene permiso (Contents: lectura y escritura)":"error "+r.status+" al leer");
+ const j=await r.json();return{sha:j.sha,data:dec(j.content)};
+}
+function ghPut(o,sha){
+ return fetch(api(),{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},hd()),body:JSON.stringify(Object.assign({message:"Sync "+new Date().toISOString(),content:enc(o),branch:sc.branch},sha?{sha:sha}:{}))});
+}
+function applyM(M){
+ applying=true;
+ rows=M.rows;cal=M.cal;cfg=Object.assign(cfg,M.cfg);tomb=M.tomb;
+ save();sv(KC,cal);sv(KG,cfg);
+ try{localStorage.setItem(TK,JSON.stringify(tomb))}catch(e){}
+ applying=false;
+ setCfg();render();if(!$("v2").hidden){loadDay();renderCal()}
+}
+function ok(){lastOk=Date.now();try{localStorage.setItem(HK,lastOk)}catch(e){}setSt("☁ Sincronizado "+new Date(lastOk).toLocaleString("es-ES",{dateStyle:"short",timeStyle:"short"}))}
+async function sync(){
+ if(!ready()){setSt("Sin sincronizar: configura GitHub en la pestaña Sync.");return}
+ if(busy)return;busy=true;setSt("Sincronizando…");
+ try{
+  for(let i=0;i<3;i++){
+   const g=await ghGet();
+   const L=norm(snap()),M=g.data?norm(mergeD(L,g.data)):L;
+   applyM(M);
+   if(g.data&&JSON.stringify(norm(g.data))===JSON.stringify(M)){ok();return}
+   const r=await ghPut(M,g.sha);
+   if(r.ok){ok();return}
+   if(r.status===404)throw new Error("no encuentro el repositorio o la rama (revisa usuario, repositorio y rama)");
+   if(r.status===401||r.status===403)throw new Error("el token no puede escribir en el repositorio");
+   if(r.status!==409&&r.status!==422)throw new Error("error "+r.status+" al guardar");
+  }
+  throw new Error("conflicto repetido, vuelve a intentarlo");
+ }catch(e){setSt("Error de sincronización: "+(e.message==="Failed to fetch"?"sin conexión; se reintentará":e.message),true)}
+ finally{busy=false}
+}
+window.onChg=function(){
+ if(applying)return;
+ try{localStorage.setItem(TK,JSON.stringify(tomb))}catch(e){}
+ if(ready()){setSt("Cambios pendientes de sincronizar…");clearTimeout(timer);timer=setTimeout(sync,2000)}
+};
+function fillG(){$("g_o").value=sc.owner;$("g_r").value=sc.repo;$("g_b").value=sc.branch;$("g_p").value=sc.path;$("g_t").value=sc.token}
+function saveG(){
+ sc={owner:$("g_o").value.trim(),repo:$("g_r").value.trim(),branch:$("g_b").value.trim()||"main",path:$("g_p").value.trim()||"data/seguimiento.json",token:$("g_t").value.trim()};
+ try{localStorage.setItem(SK,JSON.stringify(sc))}catch(e){}
+}
+$("g_s").onclick=()=>{saveG();sync()};
+$("g_n").onclick=()=>{saveG();sync()};
+$("g_x").onclick=()=>{sc.token="";saveG();fillG();setSt("Desconectado: los datos siguen en este dispositivo.")};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&ready())sync()});
+$("x_e").onclick=()=>{const t=$("x_t");t.value=JSON.stringify(norm(snap()),null,1);t.select()};
+$("x_i").onclick=()=>{
+ let o;try{o=JSON.parse($("x_t").value)}catch(e){alert("El texto no es un JSON válido.");return}
+ const fix=a=>(a||[]).filter(r=>r&&r.d).map(r=>Object.assign({},r,{t:r.t||Date.now()}));
+ const R={rows:fix(o.rows),cal:fix(o.cal),cfg:o.cfg?Object.assign({},o.cfg,{t:o.cfg.t||Date.now()}):{},tomb:o.tomb||{}};
+ applyM(norm(mergeD(norm(snap()),R)));
+ setSt("Importados "+R.rows.length+" pesajes y "+R.cal.length+" días de calorías.");
+ if(ready())sync();
+};
+fillG();
+if(ready())sync();else setSt("Sin sincronizar: configura GitHub en la pestaña Sync.");
+</script>
+</body>
+</html>
